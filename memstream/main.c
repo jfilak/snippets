@@ -31,7 +31,9 @@ void test(int flags)
 
     fclose(stream);
 
-    printf("\t'%s'\n", buffer);
+    printf(" - len = %2zd : '%s'\n", wrote, buffer);
+
+    free(buffer);
 }
 
 int main(void)
