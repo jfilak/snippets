@@ -1,0 +1,75 @@
+The goal of this code is to find the fastest way to save data read from a
+single file descriptor pointing to a pipe in two separate files.
+
+Three possible approaches are evaluated:
+    - read() once and write() twice, plus detect zero blocks and use lseek()
+      instead of write
+
+    - splice() all data of the input fd into the first destination file and
+      then create the second destination file from the first one using
+      sendfile()
+
+    - create a helper pipe, tee() input data into the pipe and call splice()
+      twice
+
+The contents of the directory should compile into 4 binaries:
+    - generator
+    - readwrite
+    - splicesendfile
+    - teesplice
+
+The generator binary can write requested amount of bytes to its standard
+output. The binary can generate all 0, random page and uninitialized page (i.e.
+allocated chunk of memory without initialization).
+
+If you want to evaluate performance of these 3 approaches on your machine,
+be sure you write enough bytes. On lenovo W541, there were no significant
+differences between the approaches for the input data of 3GiB but the results
+became more clear with 8GiB input data.
+
+Finally, as expected, it turned out that the fastest approach is the third one -
+tee() + splice().
+
+Results:
+
+$ ./generator -r -b $((8*1024*1024*1024)) | perf stat ./readwrite /var/tmp/bar /home/repos/baz
+ Performance counter stats for './readwrite /var/tmp/bar /home/repos/baz':
+
+      12247.002841      task-clock:u (msec)       #    0.298 CPUs utilized
+                 0      context-switches:u        #    0.000 K/sec
+                 0      cpu-migrations:u          #    0.000 K/sec
+                48      page-faults:u             #    0.004 K/sec
+       890,345,838      cycles:u                  #    0.073 GHz
+       281,176,654      instructions:u            #    0.32  insn per cycle
+        77,627,670      branches:u                #    6.339 M/sec
+        10,456,586      branch-misses:u           #   13.47% of all branches
+
+      41.072475259 seconds time elapsed
+
+$ ./generator -r -b $((8*1024*1024*1024)) | perf stat ./splicesendfile /var/tmp/bar /home/repos/baz
+ Performance counter stats for './splicesendfile /var/tmp/bar /home/repos/baz':
+
+      11835.264046      task-clock:u (msec)       #    0.189 CPUs utilized
+                 0      context-switches:u        #    0.000 K/sec
+                 0      cpu-migrations:u          #    0.000 K/sec
+                49      page-faults:u             #    0.004 K/sec
+       201,573,860      cycles:u                  #    0.017 GHz
+        58,388,977      instructions:u            #    0.29  insn per cycle
+        17,502,179      branches:u                #    1.479 M/sec
+         1,947,038      branch-misses:u           #   11.12% of all branches
+
+      62.648451628 seconds time elapsed
+
+$ ./generator -r -b $((8*1024*1024*1024)) | perf stat ./teesplice /var/tmp/bar /home/repos/baz
+ Performance counter stats for './teesplice /var/tmp/bar /home/repos/baz':
+
+       9845.597845      task-clock:u (msec)       #    0.244 CPUs utilized
+                 0      context-switches:u        #    0.000 K/sec
+                 0      cpu-migrations:u          #    0.000 K/sec
+                47      page-faults:u             #    0.005 K/sec
+       113,480,276      cycles:u                  #    0.012 GHz
+        22,376,504      instructions:u            #    0.20  insn per cycle
+         5,685,945      branches:u                #    0.578 M/sec
+           917,946      branch-misses:u           #   16.14% of all branches
+
+      40.428622481 seconds time elapsed
