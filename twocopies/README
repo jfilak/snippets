@@ -73,3 +73,78 @@ $ ./generator -r -b $((8*1024*1024*1024)) | perf stat ./teesplice /var/tmp/bar /
            917,946      branch-misses:u           #   16.14% of all branches
 
       40.428622481 seconds time elapsed
+
+Results for a single file and /dev/null:
+
+$ ./generator -r -b $((8*1024*1024*1024)) | perf stat ./readwrite /var/tmp/bar /dev/null
+ Performance counter stats for './readwrite /var/tmp/bar /dev/null':
+
+       8142.373272      task-clock:u (msec)       #    0.424 CPUs utilized
+                 0      context-switches:u        #    0.000 K/sec
+                 0      cpu-migrations:u          #    0.000 K/sec
+                48      page-faults:u             #    0.006 K/sec
+       719,990,446      cycles:u                  #    0.088 GHz
+       281,176,562      instructions:u            #    0.39  insn per cycle
+        77,627,592      branches:u                #    9.534 M/sec
+         6,144,700      branch-misses:u           #    7.92% of all branches
+
+      19.185076958 seconds time elapsed
+
+$ ./generator -r -b $((8*1024*1024*1024)) | perf stat ./splicesendfile /var/tmp/bar /dev/null
+ Performance counter stats for './splicesendfile /var/tmp/bar /dev/null':
+
+       6799.287816      task-clock:u (msec)       #    0.284 CPUs utilized
+                 0      context-switches:u        #    0.000 K/sec
+                 0      cpu-migrations:u          #    0.000 K/sec
+                47      page-faults:u             #    0.007 K/sec
+       203,723,287      cycles:u                  #    0.030 GHz
+        57,828,290      instructions:u            #    0.28  insn per cycle
+        17,333,967      branches:u                #    2.549 M/sec
+         1,930,496      branch-misses:u           #   11.14% of all branches
+
+      23.937814867 seconds time elapsed
+
+$ ./generator -r -b $((8*1024*1024*1024)) | perf stat ./teesplice /var/tmp/bar /dev/null
+ Performance counter stats for './teesplice /var/tmp/bar /dev/null':
+
+       5951.107749      task-clock:u (msec)       #    0.345 CPUs utilized
+                 0      context-switches:u        #    0.000 K/sec
+                 0      cpu-migrations:u          #    0.000 K/sec
+                48      page-faults:u             #    0.008 K/sec
+       280,072,131      cycles:u                  #    0.047 GHz
+       119,014,802      instructions:u            #    0.42  insn per cycle
+        30,274,433      branches:u                #    5.087 M/sec
+         2,153,008      branch-misses:u           #    7.11% of all branches
+
+      17.228733446 seconds time elapsed
+
+Sanity checks:
+
+$ ./generator -r -b $((8*1024*1024*1024)) | perf stat cat > /home/repos/baz
+ Performance counter stats for 'cat':
+
+       5321.149983      task-clock:u (msec)       #    0.306 CPUs utilized
+                 0      context-switches:u        #    0.000 K/sec
+                 0      cpu-migrations:u          #    0.000 K/sec
+                88      page-faults:u             #    0.017 K/sec
+        67,959,621      cycles:u                  #    0.013 GHz
+        10,397,532      instructions:u            #    0.15  insn per cycle
+         2,681,779      branches:u                #    0.504 M/sec
+           488,442      branch-misses:u           #   18.21% of all branches
+
+      17.364676601 seconds time elapsed
+
+
+$ ./generator -r -b $((8*1024*1024*1024)) | perf stat tee /var/tmp/bar > /home/repos/baz
+ Performance counter stats for 'tee /var/tmp/bar':
+
+      10919.722535      task-clock:u (msec)       #    0.248 CPUs utilized
+                 0      context-switches:u        #    0.000 K/sec
+                 0      cpu-migrations:u          #    0.000 K/sec
+                60      page-faults:u             #    0.005 K/sec
+     1,027,383,787      cycles:u                  #    0.094 GHz
+       476,375,828      instructions:u            #    0.46  insn per cycle
+       120,652,968      branches:u                #   11.049 M/sec
+         9,533,644      branch-misses:u           #    7.90% of all branches
+
+      44.074003699 seconds time elapsed

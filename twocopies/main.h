@@ -17,7 +17,7 @@ struct dest {
 static int xopen_destination(const char *path, struct dest *dest)
 {
     unlink(path);
-    const int fd = open(path, O_CREAT | O_WRONLY | O_EXCL | O_NOFOLLOW, 0600);
+    const int fd = open(path, O_CREAT | O_WRONLY | O_NOFOLLOW, 0600);
     if (fd < 0) {
         err(EXIT_FAILURE, "Cannot open %s", dest->path);
     }
