@@ -1,4 +1,21 @@
 #!/usr/bin/env bash
+# Author:  Jakub Filak <jakub@thefilaks.net>
+#
+# Purpose: Rename ABAP type serialized by abapGit
+#
+# Usage:   ./rename_abap OLD_TYPE_NAME NEW_TYPE_NAME
+#
+# The script will find all source files with the prefix
+# OLD_TYPE_NAME. and rename the files to NEW_TYPE_MANE.
+#
+# Then the script tries to find all occurrences of
+# the string OLD_TYPE_NAME in files in the current
+# working directory and its subdirectories and replaces
+# these occurrence with NEW_TYPE_NAME.
+#
+# The script tries to keep the casing, so it first
+# try to search for files and string in all uppercase,
+# then in lower case and finally in the given form.
 
 set -o pipefail
 set -o errexit
